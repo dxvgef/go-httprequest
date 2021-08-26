@@ -13,8 +13,8 @@ func TestURL(t *testing.T) {
 		RetryInterval: 3000,
 	})
 	resp := request.AddHeader("test", "ok").
-		AddURL("http://127.0.0.1/").
-		AddURL("http://127.0.0.1/backup").
+		AddEndpoint("http://127.0.0.1/").
+		AddEndpoint("http://127.0.0.1/backup").
 		GET()
 	if resp.Error() != nil {
 		t.Error(resp.Error())
@@ -32,7 +32,7 @@ func TestString(t *testing.T) {
 		RetryInterval: 3000,
 	})
 	resp := request.AddHeader("test", "ok").
-		AddURL("http://127.0.0.1/string").
+		AddEndpoint("http://127.0.0.1/string").
 		GET()
 	if resp.Error() != nil {
 		t.Error(resp.Error())
@@ -51,7 +51,7 @@ func TestQuery(t *testing.T) {
 		RetryInterval: 3000,
 	})
 	resp := request.AddHeader("test", "ok").
-		AddURL("http://127.0.0.1/query").
+		AddEndpoint("http://127.0.0.1/query").
 		GET()
 	if resp.Error() != nil {
 		t.Error(resp.Error())
@@ -75,7 +75,7 @@ func TestJSON(t *testing.T) {
 		RetryInterval: 3000,
 	})
 	resp := request.AddHeader("test", "ok").
-		AddURL("http://127.0.0.1/json").
+		AddEndpoint("http://127.0.0.1/json").
 		GET()
 	if resp.Error() != nil {
 		t.Error(resp.Error())

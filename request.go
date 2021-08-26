@@ -13,24 +13,23 @@ import (
 )
 
 type Request struct {
-	err    error
-	config *Config
-	url    []string
-	header map[string]string
-	values url.Values
-	body   []byte
-	req    *http.Request
+	err      error
+	config   *Config
+	endpoint []string
+	header   map[string]string
+	values   url.Values
+	body     []byte
 }
 
-// 添加URL
-func (request *Request) AddURL(url string) *Request {
-	request.url = append(request.url, url)
+// 添加端点URL
+func (request *Request) AddEndpoint(url string) *Request {
+	request.endpoint = append(request.endpoint, url)
 	return request
 }
 
-// 设置URL
-func (request *Request) SetURL(urls []string) *Request {
-	request.url = urls
+// 设置端点URL
+func (request *Request) SetEndpoint(urls []string) *Request {
+	request.endpoint = urls
 	return request
 }
 
@@ -130,14 +129,15 @@ func (request *Request) TRACE() *Response {
 func (request *Request) do(method string) *Response {
 	var (
 		body        io.Reader
-		urlIndex    int                    // 当前URL索引
-		urlIndexMax = len(request.url) - 1 // URL最大索引
-		retry       uint8                  // 当前URL重试次数
+		urlIndex    int                         // 当前URL索引
+		urlIndexMax = len(request.endpoint) - 1 // URL最大索引
+		retry       uint8                       // 当前URL重试次数
+		req         *http.Request
 		resp        *http.Response
 		response    Response
 	)
 
-	if len(request.url) == 0 {
+	if len(request.endpoint) == 0 {
 		request.err = errors.New("未定义请求URL")
 		response.request = request
 		return &response
@@ -159,12 +159,15 @@ func (request *Request) do(method string) *Response {
 		response.request = request
 		return &response
 	}
-
+	for k, v := range request.header {
+		req.Header.Set(k, v)
+	}
 	for {
 		client := &http.Client{
 			Timeout: time.Duration(request.config.Timeout) * time.Second,
 		}
-		request.req, request.err = http.NewRequest(method, request.url[urlIndex], body)
+
+		req, request.err = http.NewRequest(method, request.endpoint[urlIndex], body)
 		if request.err != nil {
 			if retry < request.config.RetryCount {
 				retry++
@@ -176,10 +179,8 @@ func (request *Request) do(method string) *Response {
 				continue
 			}
 		}
-		for k, v := range request.header {
-			request.req.Header.Set(k, v)
-		}
-		resp, request.err = client.Do(request.req)
+
+		resp, request.err = client.Do(req)
 		if request.err != nil {
 			if retry < request.config.RetryCount {
 				retry++
@@ -191,6 +192,7 @@ func (request *Request) do(method string) *Response {
 				continue
 			}
 		}
+
 		if inIntSlice(resp.StatusCode, request.config.RetryStatus) {
 			if retry < request.config.RetryCount {
 				retry++
@@ -202,13 +204,16 @@ func (request *Request) do(method string) *Response {
 				continue
 			}
 		}
+
 		break
 	}
+
 	response.request = request
 	response.resp = resp
 	if request.err == nil && resp.Body != nil {
 		response.body, request.err = ioutil.ReadAll(resp.Body)
 		_ = resp.Body.Close() // nolint:errcheck
 	}
+
 	return &response
 }
