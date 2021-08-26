@@ -1,8 +1,5 @@
 # go-httprequest
 
-## 导入路径
-> github.com/dxvgef/go-httprequest
-
 ## 简介
 Go语言的HTTP请求包，功能特性：
 - 线程安全
@@ -11,6 +8,12 @@ Go语言的HTTP请求包，功能特性：
 - 可按间隔时间和最大次数自动重发请求
 - 可定义多个URL轮循请求，当请求失败时自动使用下一个URL重发请求
 - 对响应数据进行类型转换
+
+## 导入路径
+> github.com/dxvgef/go-httprequest
+
+## 当前版本
+> v0.0.1
 
 ## 基本示例
 ```go
