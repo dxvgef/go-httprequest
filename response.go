@@ -35,6 +35,24 @@ func (response *Response) StatusCode() int {
 	return response.resp.StatusCode
 }
 
+// 将响应数据转为[]byte
+func (response *Response) Bytes() (data []byte, err error) {
+	if response.request.err != nil {
+		err = response.request.err
+		return
+	}
+	return response.body, nil
+}
+
+// 将响应数据转为字符串
+func (response *Response) String() (str string, err error) {
+	if response.request.err != nil {
+		err = response.request.err
+		return
+	}
+	return BytesToStr(response.body), nil
+}
+
 // 将响应数据做为JSON解码
 // nolint:govet
 func (response *Response) UnmarshalJSON(obj interface{}) (err error) {
@@ -59,24 +77,6 @@ func (response *Response) UnmarshalXML(obj interface{}) (err error) {
 	}
 	err = xml.Unmarshal(response.body, obj)
 	return
-}
-
-// 将响应数据转为[]byte
-func (response *Response) Bytes() (data []byte, err error) {
-	if response.request.err != nil {
-		err = response.request.err
-		return
-	}
-	return response.body, nil
-}
-
-// 将响应数据转为字符串
-func (response *Response) String() (str string, err error) {
-	if response.request.err != nil {
-		err = response.request.err
-		return
-	}
-	return BytesToStr(response.body), nil
 }
 
 // 将响应数据做为查询参数解码
