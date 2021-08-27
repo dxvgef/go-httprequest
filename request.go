@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// 请求结构体
 type Request struct {
 	err      error
 	config   *Config
@@ -128,17 +129,16 @@ func (request *Request) TRACE() *Response {
 // 发起请求
 func (request *Request) do(method string) *Response {
 	var (
-		body        io.Reader
-		urlIndex    int                         // 当前URL索引
-		urlIndexMax = len(request.endpoint) - 1 // URL最大索引
-		retry       uint8                       // 当前URL重试次数
-		req         *http.Request
-		resp        *http.Response
-		response    Response
+		body           io.Reader
+		endpointIndex  int                         // 当前URL索引
+		endpointLength = len(request.endpoint) - 1 // URL最大索引
+		retry          uint8                       // 当前URL重试次数
+		req            *http.Request
+		resp           *http.Response
+		response       Response
 	)
-
 	if len(request.endpoint) == 0 {
-		request.err = errors.New("未定义请求URL")
+		request.err = errors.New("does not define endpoint URL")
 		response.request = request
 		return &response
 	}
@@ -155,31 +155,30 @@ func (request *Request) do(method string) *Response {
 			body = bytes.NewBuffer(request.body)
 		}
 	default:
-		request.err = errors.New("不支持的请求方法：" + method)
+		request.err = errors.New("does not support " + method + " method")
 		response.request = request
 		return &response
-	}
-	for k, v := range request.header {
-		req.Header.Set(k, v)
 	}
 	for {
 		client := &http.Client{
 			Timeout: time.Duration(request.config.Timeout) * time.Second,
 		}
-
-		req, request.err = http.NewRequest(method, request.endpoint[urlIndex], body)
+		// nolint:noctx
+		req, request.err = http.NewRequest(method, request.endpoint[endpointIndex], body)
 		if request.err != nil {
 			if retry < request.config.RetryCount {
 				retry++
 				time.Sleep(time.Duration(request.config.RetryInterval) * time.Millisecond)
 				continue
 			}
-			if urlIndex < urlIndexMax {
-				urlIndex++
+			if endpointIndex < endpointLength {
+				endpointIndex++
 				continue
 			}
 		}
-
+		for k, v := range request.header {
+			req.Header.Set(k, v)
+		}
 		resp, request.err = client.Do(req)
 		if request.err != nil {
 			if retry < request.config.RetryCount {
@@ -187,8 +186,8 @@ func (request *Request) do(method string) *Response {
 				time.Sleep(time.Duration(request.config.RetryInterval) * time.Millisecond)
 				continue
 			}
-			if urlIndex < urlIndexMax {
-				urlIndex++
+			if endpointIndex < endpointLength {
+				endpointIndex++
 				continue
 			}
 		}
@@ -199,8 +198,8 @@ func (request *Request) do(method string) *Response {
 				time.Sleep(time.Duration(request.config.RetryInterval) * time.Millisecond)
 				continue
 			}
-			if urlIndex < urlIndexMax {
-				urlIndex++
+			if endpointIndex < endpointLength {
+				endpointIndex++
 				continue
 			}
 		}
