@@ -13,7 +13,7 @@ Go语言的HTTP请求包，功能特性：
 > github.com/dxvgef/go-httprequest
 
 ## 当前版本
-> v0.0.3
+> v0.0.4
 
 ## 基本示例
 ```go
@@ -46,7 +46,7 @@ func main() {
 }
 ```
 
-## 参数配置
+## `httprequest.Config`参数配置
 如果执行`httprequest.New()`时不传入参数，则自动使用默认配置。
 
 默认配置及具体参数说明如下：
@@ -64,11 +64,31 @@ var DefaultConfig = Config{
 }
 ```
 
-## 响应数据处理
+## `httprequest.Request`请求
+- `AddEndpoint(string)` 添加一个目标端点URL
+- `SetEndpoint([])` 设置目标端点URL
+- `AddHeader(string, string)` 添加一个头部参数
+- `SetHeader(map[string]string)` 设置头部参数
+- `AddValue(string, string)` 添加一个请求参数
+- `SetValue(url.Values)` 设置请求参数
+- `SetBody([]body)` 设置请求正文数据
+- `SetJSON(interface{})` 将入参变量进行`JSON`编码并做为请求正文数据
+- `SetXML(interface{})` 将入参变量进行`XML`编码并做为请求正文数据
+- `GET()` 发送`GET`方法的请求
+- `POST()` 发送`POST`方法的请求
+- `PUT()` 发送`PUT`方法的请求
+- `PATCH()` 发送`PATCH`方法的请求
+- `DELETE()` 发送`DELETE`方法的请求
+- `OPTIONS()` 发送`OPTIONS`方法的请求
+- `HEAD()` 发送`HEAD`方法的请求
+- `TRACE()` 发送`TRACE`方法的请求
+- `Error() error` 获取请求过程中的错误
 
-- `Error()` 判断请求过程是否存在错误
+## `httprequest.Response`响应
+
+- `Error()` 获取请求过程中的错误
 - `Raw()` 获取`*http.Response`
-- `Bytes() ([]byte, error)` 转为`[]byte`类型
-- `ParseQuery() (url.Values, error)` 将响应数据按查询参数格式解析到`net.Values`类型的变量
-- `UnmarshalJSON(interface{}) error` 将响应数据按JSON编码反序列化到入参变量
-- `UnmarshalXML(interface{}) error` 将响应数据按XML编码反序列化到入参变量    
+- `Bytes() ([]byte, error)` 将响应的正文数据转为`[]byte`类型
+- `ParseQuery() (url.Values, error)` 将响应的正文数据按查询参数格式解析到`net.Values`类型的变量
+- `UnmarshalJSON(interface{}) error` 将响应的正文数据进行`JSON`解析到入参变量
+- `UnmarshalXML(interface{}) error` 将响应的正文数据进行`XML`解析到入参变量    
