@@ -8,6 +8,8 @@ import (
 	"net/url"
 )
 
+const ErrNoData = "no data"
+
 type Response struct {
 	request *Request
 	resp    *http.Response
@@ -60,7 +62,7 @@ func (response *Response) UnmarshalJSON(obj interface{}) (err error) {
 		return response.request.err
 	}
 	if len(response.body) == 0 {
-		return errors.New("没有数据")
+		return errors.New(ErrNoData)
 	}
 	err = json.Unmarshal(response.body, obj)
 	return
@@ -73,7 +75,7 @@ func (response *Response) UnmarshalXML(obj interface{}) (err error) {
 		return response.request.err
 	}
 	if len(response.body) == 0 {
-		return errors.New("没有数据")
+		return errors.New(ErrNoData)
 	}
 	err = xml.Unmarshal(response.body, obj)
 	return
@@ -86,7 +88,7 @@ func (response *Response) ParseQuery() (values url.Values, err error) {
 		return
 	}
 	if len(response.body) == 0 {
-		err = errors.New("没有数据")
+		err = errors.New(ErrNoData)
 		return
 	}
 	var data string
