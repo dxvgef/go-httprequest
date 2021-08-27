@@ -8,7 +8,7 @@ import (
 	"net/url"
 )
 
-const ErrNoData = "no data"
+const ErrNoData = "正文数据为空"
 
 type Response struct {
 	request *Request

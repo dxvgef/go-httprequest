@@ -138,7 +138,7 @@ func (request *Request) do(method string) *Response {
 		response       Response
 	)
 	if len(request.endpoint) == 0 {
-		request.err = errors.New("does not define endpoint URL")
+		request.err = errors.New("没有定义目标端点URL")
 		response.request = request
 		return &response
 	}
@@ -155,7 +155,7 @@ func (request *Request) do(method string) *Response {
 			body = bytes.NewBuffer(request.body)
 		}
 	default:
-		request.err = errors.New("does not support " + method + " method")
+		request.err = errors.New("不支持 " + method + " 方法的请求")
 		response.request = request
 		return &response
 	}
