@@ -89,6 +89,7 @@ var DefaultConfig = Config{
 - `Error()` 获取请求过程中的错误
 - `Raw()` 获取`*http.Response`
 - `Bytes() ([]byte, error)` 将响应的正文数据转为`[]byte`类型
+- `String() (string, error)` 将响应的正文数据转为`string`类型
 - `ParseQuery() (url.Values, error)` 将响应的正文数据按查询参数格式解析到`net.Values`类型的变量
 - `UnmarshalJSON(interface{}) error` 将响应的正文数据进行`JSON`解析到入参变量
 - `UnmarshalXML(interface{}) error` 将响应的正文数据进行`XML`解析到入参变量    
