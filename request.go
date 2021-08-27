@@ -191,8 +191,7 @@ func (request *Request) do(method string) *Response {
 				continue
 			}
 		}
-
-		if inIntSlice(resp.StatusCode, request.config.RetryStatus) {
+		if resp != nil && inIntSlice(resp.StatusCode, request.config.RetryStatus) {
 			if retry < request.config.RetryCount {
 				retry++
 				time.Sleep(time.Duration(request.config.RetryInterval) * time.Millisecond)
@@ -203,7 +202,6 @@ func (request *Request) do(method string) *Response {
 				continue
 			}
 		}
-
 		break
 	}
 
