@@ -3,6 +3,7 @@ package httprequest
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -35,7 +36,7 @@ func (request *Request) SetEndpoint(urls []string) *Request {
 }
 
 // 设置Header参数值
-func (request *Request) SetHeaders(headers map[string]string) *Request {
+func (request *Request) SetHeader(headers map[string]string) *Request {
 	request.header = headers
 	return request
 }
@@ -73,6 +74,17 @@ func (request *Request) SetBody(body []byte) *Request {
 // 设置请求JSON数据
 func (request *Request) SetJSON(data interface{}) *Request {
 	buf, err := json.Marshal(data)
+	if err != nil {
+		request.err = err
+	} else {
+		request.body = buf
+	}
+	return request
+}
+
+// 设置请求XML数据
+func (request *Request) SetXML(data interface{}) *Request {
+	buf, err := xml.Marshal(data)
 	if err != nil {
 		request.err = err
 	} else {
