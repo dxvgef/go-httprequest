@@ -53,6 +53,9 @@ func (request *Request) AddHeader(key, value string) *Request {
 // 设置请求参数值
 func (request *Request) AddValue(key, value string) *Request {
 	request.body = nil
+	if request.values == nil {
+		request.values = url.Values{}
+	}
 	request.values.Set(key, value)
 	return request
 }
