@@ -13,7 +13,7 @@ Go语言的HTTP请求包，功能特性：
 > github.com/dxvgef/go-httprequest
 
 ## 当前版本
-> v0.0.4
+> v0.0.5
 
 ## 基本示例
 ```go
