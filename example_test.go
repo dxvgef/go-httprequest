@@ -23,6 +23,25 @@ func TestURL(t *testing.T) {
 	t.Log(resp.StatusCode())
 }
 
+// 测试添加value
+func TestValues(t *testing.T) {
+	request := New(Config{
+		Timeout:       10,
+		RetryStatus:   []int{500, 502, 503, 504, 506, 507},
+		RetryCount:    1,
+		RetryInterval: 3000,
+	})
+	resp := request.AddHeader("test", "ok").
+		AddEndpoint("http://127.0.0.1/backup").
+		AddValue("test", "ok").
+		PUT()
+	if resp.Error() != nil {
+		t.Error(resp.Error())
+		return
+	}
+	t.Log(resp.StatusCode())
+}
+
 // 测试结果转String
 func TestString(t *testing.T) {
 	request := New(Config{
