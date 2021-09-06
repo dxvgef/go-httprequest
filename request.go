@@ -181,32 +181,17 @@ func (request *Request) do(method string) *Response {
 		// nolint:noctx
 		req, request.err = http.NewRequest(method, request.endpoint[endpointIndex], body)
 		if request.err != nil {
-			if retry < request.config.RetryCount {
-				retry++
-				time.Sleep(time.Duration(request.config.RetryInterval) * time.Millisecond)
-				continue
-			}
 			if endpointIndex < endpointLength {
 				endpointIndex++
 				continue
 			}
+			break
 		}
 		for k, v := range request.header {
 			req.Header.Set(k, v)
 		}
 		resp, request.err = client.Do(req)
-		if request.err != nil {
-			if retry < request.config.RetryCount {
-				retry++
-				time.Sleep(time.Duration(request.config.RetryInterval) * time.Millisecond)
-				continue
-			}
-			if endpointIndex < endpointLength {
-				endpointIndex++
-				continue
-			}
-		}
-		if resp != nil && inIntSlice(resp.StatusCode, request.config.RetryStatus) {
+		if request.err != nil || resp == nil || inIntSlice(resp.StatusCode, request.config.RetryStatus) {
 			if retry < request.config.RetryCount {
 				retry++
 				time.Sleep(time.Duration(request.config.RetryInterval) * time.Millisecond)
