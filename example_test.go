@@ -1,6 +1,7 @@
 package httprequest
 
 import (
+	"net/http"
 	"testing"
 )
 
@@ -108,4 +109,25 @@ func TestJSON(t *testing.T) {
 		return
 	}
 	t.Log(result)
+}
+
+// 测试重试
+func TestRetry(t *testing.T) {
+	requestConfig := DefaultConfig
+	requestConfig.RetryCount = 3
+	requestConfig.RetryInterval = 3000
+	request := New(requestConfig)
+	resp := request.AddEndpoint("http://127.0.0.1:8080/").
+		AddHeader("Content-Type", "application/x-www-form-urlencoded").
+		AddHeader("Authorization", "123456").
+		AddValue("test", "ok").
+		PUT()
+	if resp.Error() != nil {
+		t.Error(resp.Error())
+		return
+	}
+	if resp.StatusCode() != http.StatusNoContent && resp.StatusCode() != http.StatusOK {
+		t.Error("错误状态码", resp.StatusCode())
+		return
+	}
 }
