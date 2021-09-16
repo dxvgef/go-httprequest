@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -157,24 +158,24 @@ func (request *Request) do(method string) *Response {
 		response.request = request
 		return &response
 	}
-
-	switch method {
-	case http.MethodGet, http.MethodHead, http.MethodDelete, http.MethodOptions, http.MethodTrace:
-		if len(request.values) > 0 {
-			body = strings.NewReader(request.values.Encode())
-		}
-	case http.MethodPost, http.MethodPut, http.MethodPatch:
-		if len(request.values) > 0 {
-			body = strings.NewReader(request.values.Encode())
-		} else if len(request.body) > 0 {
-			body = bytes.NewBuffer(request.body)
-		}
-	default:
-		request.err = errors.New("不支持 " + method + " 方法的请求")
-		response.request = request
-		return &response
-	}
 	for {
+		log.Println("发起请求")
+		switch method {
+		case http.MethodGet, http.MethodHead, http.MethodDelete, http.MethodOptions, http.MethodTrace:
+			if len(request.values) > 0 {
+				body = strings.NewReader(request.values.Encode())
+			}
+		case http.MethodPost, http.MethodPut, http.MethodPatch:
+			if len(request.values) > 0 {
+				body = strings.NewReader(request.values.Encode())
+			} else if len(request.body) > 0 {
+				body = bytes.NewBuffer(request.body)
+			}
+		default:
+			request.err = errors.New("不支持 " + method + " 方法的请求")
+			response.request = request
+			return &response
+		}
 		client := &http.Client{
 			Timeout: time.Duration(request.config.Timeout) * time.Second,
 		}
@@ -183,34 +184,37 @@ func (request *Request) do(method string) *Response {
 		if request.err != nil {
 			if endpointIndex < endpointLength {
 				endpointIndex++
+				client.CloseIdleConnections()
 				continue
 			}
+			client.CloseIdleConnections()
 			break
 		}
 		for k, v := range request.header {
 			req.Header.Set(k, v)
 		}
-		resp, request.err = client.Do(req)
+		resp, request.err = client.Do(req) // nolint:bodyclose
 		if request.err != nil || resp == nil || inIntSlice(resp.StatusCode, request.config.RetryStatus) {
 			if retry < request.config.RetryCount {
 				retry++
+				client.CloseIdleConnections()
 				time.Sleep(time.Duration(request.config.RetryInterval) * time.Millisecond)
 				continue
 			}
 			if endpointIndex < endpointLength {
 				endpointIndex++
+				client.CloseIdleConnections()
 				continue
 			}
 		}
+		client.CloseIdleConnections()
 		break
 	}
-
 	response.request = request
 	response.resp = resp
 	if request.err == nil && resp.Body != nil {
 		response.body, request.err = ioutil.ReadAll(resp.Body)
-		_ = resp.Body.Close() // nolint:errcheck
+		request.err = resp.Body.Close()
 	}
-
 	return &response
 }
