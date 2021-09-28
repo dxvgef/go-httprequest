@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -159,7 +158,6 @@ func (request *Request) do(method string) *Response {
 		return &response
 	}
 	for {
-		log.Println("发起请求")
 		switch method {
 		case http.MethodGet, http.MethodHead, http.MethodDelete, http.MethodOptions, http.MethodTrace:
 			if len(request.values) > 0 {
