@@ -159,10 +159,6 @@ func (request *Request) do(method string) *Response {
 	}
 
 	for {
-		// 设置header参数值
-		for k, v := range request.header {
-			req.Header.Set(k, v)
-		}
 		// 判断请求方法，根据不同的方法设置不同的参数方式
 		switch method {
 		case http.MethodGet, http.MethodHead, http.MethodDelete, http.MethodOptions, http.MethodTrace:
@@ -183,13 +179,11 @@ func (request *Request) do(method string) *Response {
 		// 定义请求实例
 		req, request.err = http.NewRequest(method, request.endpoint[endpointIndex], body) //nolint:noctx
 		if request.err != nil {
-			// 如果还有endpoint可供遍历，则尝试请求下一个endpoint，而不是中断遍历
-			if endpointIndex < endpointLength {
-				endpointIndex++
-				continue
-			}
-			// 如果没有endpoint了，则停止循环直接报错不再继续后面发起请求的逻辑
 			break
+		}
+		// 设置header参数值
+		for k, v := range request.header {
+			req.Header.Set(k, v)
 		}
 		// 发起请求
 		resp, request.err = request.client.Do(req)
@@ -208,6 +202,8 @@ func (request *Request) do(method string) *Response {
 			}
 			// 如果没有重试次数，但还有下一个endpoint
 			if endpointIndex < endpointLength {
+				// 重置重试次数
+				retry = 0
 				endpointIndex++
 				if resp != nil && resp.Body != nil {
 					if err := resp.Body.Close(); err != nil {
