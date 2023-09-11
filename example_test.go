@@ -43,18 +43,21 @@ func TestValues(t *testing.T) {
 	t.Log(resp.StatusCode())
 }
 
-// 测试在请求URL中添加查询参数
-func TestAddQuery(t *testing.T) {
+// 测试在GET请求中添加查询参数
+func TestAddValueGET(t *testing.T) {
 	request := New(Config{
 		Timeout:       10,
 		RetryStatus:   []int{500, 502, 503, 504, 506, 507},
-		RetryCount:    1,
+		RetryCount:    3,
 		RetryInterval: 3000,
 	})
 	resp := request.AddHeader("test", "ok").
-		AddEndpoint("http://127.0.0.1/backup").
+		AddEndpoint("http://127.0.0.1:8080").
+		AddEndpoint("http://127.0.0.1:8090").
+		AddEndpoint("http://127.0.0.1").
 		AddValue("test", "ok").
-		PUT()
+		AddValue("test2", "ok2").
+		GET()
 	if resp.Error() != nil {
 		t.Error(resp.Error())
 		return
