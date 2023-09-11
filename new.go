@@ -2,6 +2,8 @@ package httprequest
 
 import (
 	"net"
+	"net/http"
+	"time"
 )
 
 // 配置
@@ -21,13 +23,19 @@ var DefaultConfig = Config{
 	RetryInterval: 1000,
 }
 
-// 新建请求
+// 新建请求实例
 func New(config ...Config) *Request {
 	var request Request
 	if len(config) == 0 {
+		// 使用默认配置
 		request.config = &DefaultConfig
 	} else {
+		// 使用指定配置
 		request.config = &config[0]
+	}
+	// 设置每次请求的超时时间
+	request.client = &http.Client{
+		Timeout: time.Duration(request.config.Timeout) * time.Second,
 	}
 	return &request
 }

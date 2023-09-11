@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// 测试多个URL轮循
+// 测试多个endpoint轮循请求
 func TestURL(t *testing.T) {
 	request := New(Config{
 		Timeout:       10,
@@ -24,7 +24,7 @@ func TestURL(t *testing.T) {
 	t.Log(resp.StatusCode())
 }
 
-// 测试添加value
+// 测试在请求Body中添加参数值
 func TestValues(t *testing.T) {
 	request := New(Config{
 		Timeout:       10,
@@ -43,7 +43,26 @@ func TestValues(t *testing.T) {
 	t.Log(resp.StatusCode())
 }
 
-// 测试结果转String
+// 测试在请求URL中添加查询参数
+func TestAddQuery(t *testing.T) {
+	request := New(Config{
+		Timeout:       10,
+		RetryStatus:   []int{500, 502, 503, 504, 506, 507},
+		RetryCount:    1,
+		RetryInterval: 3000,
+	})
+	resp := request.AddHeader("test", "ok").
+		AddEndpoint("http://127.0.0.1/backup").
+		AddValue("test", "ok").
+		PUT()
+	if resp.Error() != nil {
+		t.Error(resp.Error())
+		return
+	}
+	t.Log(resp.StatusCode())
+}
+
+// 测试将响应数据转为string
 func TestString(t *testing.T) {
 	request := New(Config{
 		Timeout:       10,
@@ -62,7 +81,7 @@ func TestString(t *testing.T) {
 	t.Log(resp.String())
 }
 
-// 测试查询参数结果
+// 测试将响应数据转为url.Values
 func TestQuery(t *testing.T) {
 	request := New(Config{
 		Timeout:       10,
@@ -86,7 +105,7 @@ func TestQuery(t *testing.T) {
 	t.Log(values.Encode())
 }
 
-// 测试JSON结果
+// 测试将响应数据转为JSON
 func TestJSON(t *testing.T) {
 	request := New(Config{
 		Timeout:       10,
@@ -111,7 +130,7 @@ func TestJSON(t *testing.T) {
 	t.Log(result)
 }
 
-// 测试重试
+// 测试endpoint请求重试
 func TestRetry(t *testing.T) {
 	requestConfig := DefaultConfig
 	requestConfig.RetryCount = 3

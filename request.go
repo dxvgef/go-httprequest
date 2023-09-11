@@ -6,7 +6,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,6 +20,7 @@ type Request struct {
 	header   map[string]string
 	values   url.Values
 	body     []byte
+	client   *http.Client
 }
 
 // 添加端点URL
@@ -50,7 +50,7 @@ func (request *Request) AddHeader(key, value string) *Request {
 	return request
 }
 
-// 设置请求参数值
+// 添加Body参数值
 func (request *Request) AddValue(key, value string) *Request {
 	request.body = nil
 	if request.values == nil {
@@ -60,21 +60,21 @@ func (request *Request) AddValue(key, value string) *Request {
 	return request
 }
 
-// 设置请求参数值
+// 设置Body参数值
 func (request *Request) SetValue(values url.Values) *Request {
 	request.body = nil
 	request.values = values
 	return request
 }
 
-// 设置请求数据
+// 设置Body数据，会清空之前的body数据
 func (request *Request) SetBody(body []byte) *Request {
 	request.values = nil
 	request.body = body
 	return request
 }
 
-// 设置请求JSON数据
+// 用JSON做为body数据
 func (request *Request) SetJSON(data interface{}) *Request {
 	buf, err := json.Marshal(data)
 	if err != nil {
@@ -85,7 +85,7 @@ func (request *Request) SetJSON(data interface{}) *Request {
 	return request
 }
 
-// 设置请求XML数据
+// 用xml做为请求数据
 func (request *Request) SetXML(data interface{}) *Request {
 	buf, err := xml.Marshal(data)
 	if err != nil {
@@ -153,15 +153,21 @@ func (request *Request) do(method string) *Response {
 		response       Response
 	)
 	if len(request.endpoint) == 0 {
-		request.err = errors.New("没有定义目标端点URL")
+		request.err = errors.New("没有定义目标端点URL") //nolint:gosmopolitan
 		response.request = request
 		return &response
 	}
+
 	for {
+		// 设置header参数值
+		for k, v := range request.header {
+			req.Header.Set(k, v)
+		}
+		// 判断请求方法，根据不同的方法设置不同的参数方式
 		switch method {
 		case http.MethodGet, http.MethodHead, http.MethodDelete, http.MethodOptions, http.MethodTrace:
 			if len(request.values) > 0 {
-				body = strings.NewReader(request.values.Encode())
+				request.endpoint[endpointIndex] += "?" + request.values.Encode()
 			}
 		case http.MethodPost, http.MethodPut, http.MethodPatch:
 			if len(request.values) > 0 {
@@ -170,49 +176,59 @@ func (request *Request) do(method string) *Response {
 				body = bytes.NewBuffer(request.body)
 			}
 		default:
-			request.err = errors.New("不支持 " + method + " 方法的请求")
+			request.err = errors.New("不支持 " + method + " 方法的请求") //nolint:gosmopolitan
 			response.request = request
 			return &response
 		}
-		client := &http.Client{
-			Timeout: time.Duration(request.config.Timeout) * time.Second,
-		}
-		// nolint:noctx
-		req, request.err = http.NewRequest(method, request.endpoint[endpointIndex], body)
+		// 定义请求实例
+		req, request.err = http.NewRequest(method, request.endpoint[endpointIndex], body) //nolint:noctx
 		if request.err != nil {
+			// 如果还有endpoint可供遍历，则尝试请求下一个endpoint，而不是中断遍历
 			if endpointIndex < endpointLength {
 				endpointIndex++
-				client.CloseIdleConnections()
 				continue
 			}
-			client.CloseIdleConnections()
+			// 如果没有endpoint了，则停止循环直接报错不再继续后面发起请求的逻辑
 			break
 		}
-		for k, v := range request.header {
-			req.Header.Set(k, v)
-		}
-		resp, request.err = client.Do(req) // nolint:bodyclose
+		// 发起请求
+		resp, request.err = request.client.Do(req)
+		// 如果请求出错或者响应的不是正常的状态码
 		if request.err != nil || resp == nil || inIntSlice(resp.StatusCode, request.config.RetryStatus) {
+			// 如果还有重试次数
 			if retry < request.config.RetryCount {
 				retry++
-				client.CloseIdleConnections()
+				if resp != nil && resp.Body != nil {
+					if err := resp.Body.Close(); err != nil {
+					}
+				}
+				// 间隔一段时间后尝试下一个endpoint
 				time.Sleep(time.Duration(request.config.RetryInterval) * time.Millisecond)
 				continue
 			}
+			// 如果没有重试次数，但还有下一个endpoint
 			if endpointIndex < endpointLength {
 				endpointIndex++
-				client.CloseIdleConnections()
+				if resp != nil && resp.Body != nil {
+					if err := resp.Body.Close(); err != nil {
+					}
+				}
+				// 不间隔，立马尝试下一个endpoint
 				continue
 			}
 		}
-		client.CloseIdleConnections()
+		// 如果请求没有出错，则停止遍历endpoint
 		break
 	}
+
+	// 处理响应实例
 	response.request = request
 	response.resp = resp
 	if request.err == nil && resp.Body != nil {
-		response.body, request.err = ioutil.ReadAll(resp.Body)
-		request.err = resp.Body.Close()
+		// 读取body数据
+		response.body, request.err = io.ReadAll(resp.Body)
+		if err := resp.Body.Close(); err != nil {
+		}
 	}
 	return &response
 }

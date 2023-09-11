@@ -8,7 +8,7 @@ import (
 	"net/url"
 )
 
-const ErrNoData = "正文数据为空"
+const ErrNoData = "正文数据为空" //nolint:gosmopolitan
 
 type Response struct {
 	request *Request
@@ -56,8 +56,7 @@ func (response *Response) String() (str string, err error) {
 }
 
 // 将响应数据做为JSON解码
-// nolint:govet
-func (response *Response) UnmarshalJSON(obj interface{}) (err error) {
+func (response *Response) UnmarshalJSON(obj interface{}) (err error) { //nolint:govet
 	if response.request.err != nil {
 		return response.request.err
 	}
@@ -69,8 +68,7 @@ func (response *Response) UnmarshalJSON(obj interface{}) (err error) {
 }
 
 // 将响应数据做为XML解码
-// nolint:govet
-func (response *Response) UnmarshalXML(obj interface{}) (err error) {
+func (response *Response) UnmarshalXML(obj interface{}) (err error) { //nolint:govet
 	if response.request.err != nil {
 		return response.request.err
 	}
